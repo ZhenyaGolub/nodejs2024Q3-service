@@ -29,10 +29,10 @@ export class UserController {
     return this.userService.getOne(id);
   }
 
-  // @Post()
-  // create(@Body() createUserDto: CreateUser): ReturnedUser {
-  //   return this.userService.create(createUserDto);
-  // }
+  @Post()
+  create(@Body() createUserDto: CreateUser): ReturnedUser {
+    return this.userService.create(createUserDto);
+  }
 
   // @Put(':id')
   // update(

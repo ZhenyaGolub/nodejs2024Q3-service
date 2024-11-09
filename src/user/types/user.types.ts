@@ -1,3 +1,5 @@
+import { IsNotEmpty } from 'class-validator';
+
 export type User = {
   id: string;
   login: string;
@@ -7,7 +9,13 @@ export type User = {
   updatedAt: number;
 };
 
-export type CreateUser = Pick<User, 'login' | 'password'>;
+export class CreateUser {
+  @IsNotEmpty()
+  login: string;
+
+  @IsNotEmpty()
+  password: string;
+}
 
 export type ReturnedUser = Omit<User, 'password'>;
 

@@ -1,5 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { validate } from 'uuid';
+import { validate, v4 } from 'uuid';
 import { CreateUser, UpdatePassword, User } from './types/user.types';
 
 @Injectable()
@@ -23,7 +23,15 @@ export class UserService {
   }
 
   create(createUserDto: CreateUser) {
-    return {};
+    const newUser = {
+      ...createUserDto,
+      id: v4(),
+      version: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    this.users.push(newUser);
+    return newUser;
   }
 
   update(updateUserDto: UpdatePassword, id: string) {
