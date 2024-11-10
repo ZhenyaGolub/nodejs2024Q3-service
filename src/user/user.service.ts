@@ -62,8 +62,17 @@ export class UserService {
     return updatedUser;
   }
 
-  delete(id: string) {
-    return {};
+  delete(userId: string) {
+    const foundedUser = this.findUser(userId);
+
+    if (!validate(userId)) {
+      throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
+    }
+    if (!foundedUser) {
+      throw new HttpException('User is not found', HttpStatus.NOT_FOUND);
+    }
+
+    this.users = this.users.filter(({ id }) => id !== userId);
   }
 
   findUser(userId: string) {
