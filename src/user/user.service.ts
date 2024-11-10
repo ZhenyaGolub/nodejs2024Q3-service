@@ -6,7 +6,7 @@ import { CreateUser, UpdatePassword, User } from './types/user.types';
 export class UserService {
   private users: User[] = [];
 
-  getAll(): User[] {
+  getAll() {
     return this.users;
   }
 
