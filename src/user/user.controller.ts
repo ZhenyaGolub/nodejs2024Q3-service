@@ -34,13 +34,13 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  // @Put(':id')
-  // update(
-  //   @Body() updateUserDto: UpdatePassword,
-  //   @Param('id') id: string,
-  // ): ReturnedUser {
-  //   return {};
-  // }
+  @Put(':id')
+  update(
+    @Body() updateUserDto: UpdatePassword,
+    @Param('id') id: string,
+  ): ReturnedUser {
+    return this.userService.update(updateUserDto, id);
+  }
 
   // @Delete(':id')
   // delete(@Param('id') id: string) {

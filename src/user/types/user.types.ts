@@ -1,13 +1,13 @@
 import { IsNotEmpty } from 'class-validator';
 
-export type User = {
+export class User {
   id: string;
   login: string;
   password: string;
   version: number;
   createdAt: number;
   updatedAt: number;
-};
+}
 
 export class CreateUser {
   @IsNotEmpty()
