@@ -1,9 +1,20 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { Artist, CreateArtist } from './types/artist.types';
 import { v4, validate } from 'uuid';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class ArtistService {
+  constructor(
+    @Inject(forwardRef(() => FavsService))
+    private readonly favsService: FavsService,
+  ) {}
   private artists: Artist[] = [];
 
   getAll() {
@@ -58,7 +69,7 @@ export class ArtistService {
     if (!foundedArtist) {
       throw new HttpException('Artist is not found', HttpStatus.NOT_FOUND);
     }
-
+    this.favsService.deleteItem('artists', id);
     this.artists = this.artists.filter(({ id }) => id !== foundedArtist.id);
   }
 

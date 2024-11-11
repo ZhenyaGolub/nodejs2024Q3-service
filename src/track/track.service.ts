@@ -1,9 +1,20 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { CreateTrack, Track } from './types/track.types';
 import { v4, validate } from 'uuid';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class TrackService {
+  constructor(
+    @Inject(forwardRef(() => FavsService))
+    private readonly favsService: FavsService,
+  ) {}
   private tracks: Track[] = [];
 
   getAll() {
@@ -62,7 +73,7 @@ export class TrackService {
     if (!foundedTrack) {
       throw new HttpException('Track is not found', HttpStatus.NOT_FOUND);
     }
-
+    this.favsService.deleteItem('tracks', trackId);
     this.tracks = this.tracks.filter(({ id }) => id !== trackId);
   }
 

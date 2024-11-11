@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { Favorites, ResponseFavorites } from './types/favs.types';
 import { TrackService } from 'src/track/track.service';
 import { validate } from 'uuid';
@@ -8,8 +14,11 @@ import { AlbumService } from 'src/album/album.service';
 @Injectable()
 export class FavsService {
   constructor(
+    @Inject(forwardRef(() => TrackService))
     private readonly trackService: TrackService,
+    @Inject(forwardRef(() => ArtistService))
     private readonly artistService: ArtistService,
+    @Inject(forwardRef(() => AlbumService))
     private readonly albumService: AlbumService,
   ) {}
   private favs: Favorites = {
@@ -132,5 +141,9 @@ export class FavsService {
 
   find(key: keyof Favorites, itemId: string) {
     return this.favs[key].find((id) => id === itemId);
+  }
+
+  deleteItem(key: keyof Favorites, itemId: string) {
+    return this.favs[key].filter((id) => id !== itemId);
   }
 }

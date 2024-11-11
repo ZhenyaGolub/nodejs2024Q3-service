@@ -1,9 +1,21 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Album, ValidatedAlbum } from './types/album.types';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { v4, validate } from 'uuid';
+
+import { Album, ValidatedAlbum } from './types/album.types';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class AlbumService {
+  constructor(
+    @Inject(forwardRef(() => FavsService))
+    private readonly favsService: FavsService,
+  ) {}
   private albums: Album[] = [];
 
   getAll() {
@@ -60,7 +72,7 @@ export class AlbumService {
     if (!foundedAlbum) {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
-
+    this.favsService.deleteItem('albums', id);
     this.albums = this.albums.filter(({ id }) => id !== foundedAlbum.id);
   }
 
