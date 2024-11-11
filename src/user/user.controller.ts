@@ -21,7 +21,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  getAll(): User[] {
+  getAll(): Omit<User, 'password'>[] {
     return this.userService.getAll();
   }
 

@@ -7,7 +7,7 @@ export class UserService {
   private users: User[] = [];
 
   getAll() {
-    return this.users;
+    return this.users.map((user) => this.hidePassword(user));
   }
 
   getOne(userId: string) {
@@ -19,7 +19,7 @@ export class UserService {
       throw new HttpException('User is not found', HttpStatus.NOT_FOUND);
     }
 
-    return foundedUser;
+    return this.hidePassword(foundedUser);
   }
 
   create(createUserDto: CreateUser) {
@@ -31,7 +31,7 @@ export class UserService {
       updatedAt: Date.now(),
     };
     this.users.push(newUser);
-    return newUser;
+    return this.hidePassword(newUser);
   }
 
   update({ oldPassword, newPassword }: UpdatePassword, id: string) {
@@ -59,7 +59,7 @@ export class UserService {
       ...this.users.filter(({ id }) => id !== foundedUser.id),
       updatedUser,
     ];
-    return updatedUser;
+    return this.hidePassword(updatedUser);
   }
 
   delete(userId: string) {
@@ -77,5 +77,10 @@ export class UserService {
 
   findUser(userId: string) {
     return this.users.find(({ id }) => id === userId);
+  }
+
+  hidePassword(user: User) {
+    const { password, ...props } = user;
+    return props;
   }
 }
