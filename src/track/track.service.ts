@@ -80,4 +80,11 @@ export class TrackService {
   findTrack(trackId: string) {
     return this.tracks.find(({ id }) => id === trackId);
   }
+
+  deleteId(key: 'artistId' | 'albumId', id: string) {
+    const track = this.tracks.find((track) => track[key] === id);
+    if (track) {
+      this.update({ [key]: null } as CreateTrack, track.id);
+    }
+  }
 }

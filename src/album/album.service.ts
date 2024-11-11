@@ -9,12 +9,17 @@ import { v4, validate } from 'uuid';
 
 import { Album, ValidatedAlbum } from './types/album.types';
 import { FavsService } from 'src/favs/favs.service';
+import { TrackModule } from 'src/track/track.module';
+import { TrackService } from 'src/track/track.service';
+import { CreateTrack } from 'src/track/types/track.types';
 
 @Injectable()
 export class AlbumService {
   constructor(
     @Inject(forwardRef(() => FavsService))
     private readonly favsService: FavsService,
+    @Inject(forwardRef(() => TrackService))
+    private readonly trackService: TrackService,
   ) {}
   private albums: Album[] = [];
 
@@ -54,7 +59,7 @@ export class AlbumService {
     }
     const updatedAlbum = {
       ...foundedAlbum,
-      updateAlbumDto,
+      ...updateAlbumDto,
     };
     this.albums = [
       ...this.albums.filter(({ id }) => id !== foundedAlbum.id),
@@ -73,10 +78,18 @@ export class AlbumService {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
     this.favsService.deleteItem('albums', id);
+    this.trackService.deleteId('albumId', id);
     this.albums = this.albums.filter(({ id }) => id !== foundedAlbum.id);
   }
 
   findAlbum(abumId: string) {
     return this.albums.find(({ id }) => id === abumId);
+  }
+
+  deleteId(key: 'artistId', id: string) {
+    const album = this.albums.find((track) => track[key] === id);
+    if (album) {
+      this.update({ [key]: null } as ValidatedAlbum, album.id);
+    }
   }
 }
