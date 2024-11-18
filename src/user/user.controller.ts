@@ -1,3 +1,4 @@
+import { User } from '@prisma/client';
 import {
   Controller,
   Get,
@@ -9,29 +10,24 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import {
-  CreateUser,
-  ReturnedUser,
-  UpdatePassword,
-  User,
-} from './types/user.types';
+import { CreateUser, ReturnedUser, UpdatePassword } from './types/user.types';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  getAll(): Omit<User, 'password'>[] {
+  getAll(): Promise<Omit<User, 'password'>[]> {
     return this.userService.getAll();
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string): ReturnedUser {
+  getOne(@Param('id') id: string): Promise<Omit<User, 'password'>> {
     return this.userService.getOne(id);
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUser): ReturnedUser {
+  create(@Body() createUserDto: CreateUser): Promise<Omit<User, 'password'>> {
     return this.userService.create(createUserDto);
   }
 
@@ -39,7 +35,7 @@ export class UserController {
   update(
     @Body() updateUserDto: UpdatePassword,
     @Param('id') id: string,
-  ): ReturnedUser {
+  ): Promise<Omit<User, 'password'>> {
     return this.userService.update(updateUserDto, id);
   }
 

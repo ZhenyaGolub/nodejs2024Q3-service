@@ -1,17 +1,23 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { validate, v4 } from 'uuid';
+
 import { CreateUser, UpdatePassword, User } from './types/user.types';
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class UserService {
-  private users: User[] = [];
+  constructor(private readonly dbService: DbService) {}
 
-  getAll() {
-    return this.users.map((user) => this.hidePassword(user));
+  async getAll() {
+    return (await this.dbService.user.findMany()).map((user) =>
+      this.hidePassword(user),
+    );
   }
 
-  getOne(userId: string) {
-    const foundedUser = this.findUser(userId);
+  async getOne(userId: string) {
+    const foundedUser = await this.dbService.user.findUnique({
+      where: { id: userId },
+    });
     if (!validate(userId)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
     }
@@ -22,20 +28,20 @@ export class UserService {
     return this.hidePassword(foundedUser);
   }
 
-  create(createUserDto: CreateUser) {
+  async create(createUserDto: CreateUser) {
     const newUser = {
       ...createUserDto,
       id: v4(),
       version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
     };
-    this.users.push(newUser);
-    return this.hidePassword(newUser);
+    const user = await this.dbService.user.create({ data: newUser });
+    return this.hidePassword(user);
   }
 
-  update({ oldPassword, newPassword }: UpdatePassword, id: string) {
-    const foundedUser = this.findUser(id);
+  async update({ oldPassword, newPassword }: UpdatePassword, id: string) {
+    const foundedUser = await this.dbService.user.findUnique({
+      where: { id },
+    });
 
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -49,21 +55,18 @@ export class UserService {
         HttpStatus.FORBIDDEN,
       );
     }
-    const updatedUser = {
-      ...foundedUser,
-      version: foundedUser.version + 1,
-      password: newPassword,
-      updatedAt: Date.now(),
-    };
-    this.users = [
-      ...this.users.filter(({ id }) => id !== foundedUser.id),
-      updatedUser,
-    ];
+    const updatedUser = await this.dbService.user.update({
+      where: { id },
+      data: { password: newPassword, version: foundedUser.version + 1 },
+    });
+
     return this.hidePassword(updatedUser);
   }
 
-  delete(userId: string) {
-    const foundedUser = this.findUser(userId);
+  async delete(userId: string) {
+    const foundedUser = await this.dbService.user.findUnique({
+      where: { id: userId },
+    });
 
     if (!validate(userId)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -72,11 +75,9 @@ export class UserService {
       throw new HttpException('User is not found', HttpStatus.NOT_FOUND);
     }
 
-    this.users = this.users.filter(({ id }) => id !== userId);
-  }
-
-  findUser(userId: string) {
-    return this.users.find(({ id }) => id === userId);
+    await this.dbService.user.delete({
+      where: { id: userId },
+    });
   }
 
   hidePassword(user: User) {
