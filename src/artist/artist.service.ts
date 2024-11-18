@@ -69,8 +69,30 @@ export class ArtistService {
     const foundedFavoritesArtist = await this.dbService.favorites.findUnique({
       where: { id: '1', artists: { has: id } },
     });
+
     if (foundedFavoritesArtist) {
       await this.favsService.removeItem('artists', id);
+    }
+
+    const albumId = (await this.dbService.album.findMany()).find(
+      ({ artistId }) => artistId === id,
+    )?.id;
+    const trackId = (await this.dbService.track.findMany()).find(
+      ({ artistId }) => artistId === id,
+    )?.id;
+
+    if (albumId) {
+      await this.dbService.album.update({
+        where: { id: albumId },
+        data: { artistId: null },
+      });
+    }
+
+    if (trackId) {
+      await this.dbService.track.update({
+        where: { id: trackId },
+        data: { artistId: null },
+      });
     }
 
     await this.dbService.artist.delete({

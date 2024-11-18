@@ -76,6 +76,17 @@ export class AlbumService {
     if (foundedFavoritesAlbum) {
       await this.favsService.removeItem('albums', id);
     }
+    const trackId = (await this.dbService.track.findMany()).find(
+      ({ albumId }) => albumId === id,
+    )?.id;
+
+    if (trackId) {
+      await this.dbService.track.update({
+        where: { id: trackId },
+        data: { albumId: null },
+      });
+    }
+
     await this.dbService.album.delete({
       where: { id },
     });
