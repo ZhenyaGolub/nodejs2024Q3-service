@@ -1,3 +1,4 @@
+import { Album } from '@prisma/client';
 import {
   Body,
   Controller,
@@ -9,24 +10,24 @@ import {
   Put,
 } from '@nestjs/common';
 import { AlbumService } from './album.service';
-import { Album, ValidatedAlbum } from './types/album.types';
+import { ValidatedAlbum } from './types/album.types';
 
 @Controller('album')
 export class AlbumController {
   constructor(private readonly albumService: AlbumService) {}
 
   @Get()
-  getAll(): Album[] {
+  getAll(): Promise<Album[]> {
     return this.albumService.getAll();
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string): Album {
+  getOne(@Param('id') id: string): Promise<Album> {
     return this.albumService.getOne(id);
   }
 
   @Post()
-  create(@Body() createAlbumDto: ValidatedAlbum): Album {
+  create(@Body() createAlbumDto: ValidatedAlbum): Promise<Album> {
     return this.albumService.create(createAlbumDto);
   }
 
@@ -34,7 +35,7 @@ export class AlbumController {
   update(
     @Body() updateAlbumDto: ValidatedAlbum,
     @Param('id') id: string,
-  ): Album {
+  ): Promise<Album> {
     return this.albumService.update(updateAlbumDto, id);
   }
 

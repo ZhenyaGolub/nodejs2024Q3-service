@@ -1,31 +1,21 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4, validate } from 'uuid';
 
-import { Album, ValidatedAlbum } from './types/album.types';
-import { TrackModule } from 'src/track/track.module';
-import { TrackService } from 'src/track/track.service';
-import { CreateTrack } from 'src/track/types/track.types';
+import { ValidatedAlbum } from './types/album.types';
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class AlbumService {
-  constructor(
-    @Inject(forwardRef(() => TrackService))
-    private readonly trackService: TrackService,
-  ) {}
-  private albums: Album[] = [];
+  constructor(private readonly dbService: DbService) {}
 
-  getAll() {
-    return this.albums;
+  async getAll() {
+    return await this.dbService.album.findMany();
   }
 
-  getOne(id: string) {
-    const foundedAlbum = this.findAlbum(id);
+  async getOne(id: string) {
+    const foundedAlbum = await this.dbService.album.findUnique({
+      where: { id },
+    });
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
     }
@@ -35,18 +25,21 @@ export class AlbumService {
     return foundedAlbum;
   }
 
-  create({ artistId, ...props }: ValidatedAlbum) {
-    const newAlbum = {
-      ...props,
-      artistId: artistId || null,
-      id: v4(),
-    };
-    this.albums.push(newAlbum);
+  async create({ artistId, ...props }: ValidatedAlbum) {
+    const newAlbum = await this.dbService.album.create({
+      data: {
+        ...props,
+        artistId: artistId || null,
+        id: v4(),
+      },
+    });
     return newAlbum;
   }
 
-  update(updateAlbumDto: ValidatedAlbum, id: string) {
-    const foundedAlbum = this.findAlbum(id);
+  async update(updateAlbumDto: ValidatedAlbum, id: string) {
+    const foundedAlbum = await this.dbService.album.findUnique({
+      where: { id },
+    });
 
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -54,19 +47,17 @@ export class AlbumService {
     if (!foundedAlbum) {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
-    const updatedAlbum = {
-      ...foundedAlbum,
-      ...updateAlbumDto,
-    };
-    this.albums = [
-      ...this.albums.filter(({ id }) => id !== foundedAlbum.id),
-      updatedAlbum,
-    ];
+    const updatedAlbum = await this.dbService.album.update({
+      where: { id },
+      data: updateAlbumDto,
+    });
     return updatedAlbum;
   }
 
-  delete(id: string) {
-    const foundedAlbum = this.findAlbum(id);
+  async delete(id: string) {
+    const foundedAlbum = await this.dbService.album.findUnique({
+      where: { id },
+    });
 
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -75,18 +66,9 @@ export class AlbumService {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
 
-    this.trackService.deleteId('albumId', id);
-    this.albums = this.albums.filter(({ id }) => id !== foundedAlbum.id);
-  }
-
-  findAlbum(abumId: string) {
-    return this.albums.find(({ id }) => id === abumId);
-  }
-
-  deleteId(key: 'artistId', id: string) {
-    const album = this.albums.find((track) => track[key] === id);
-    if (album) {
-      this.update({ [key]: null } as ValidatedAlbum, album.id);
-    }
+    // Think about this
+    await this.dbService.album.delete({
+      where: { id },
+    });
   }
 }
