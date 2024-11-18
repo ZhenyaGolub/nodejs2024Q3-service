@@ -8,7 +8,6 @@ import {
 import { v4, validate } from 'uuid';
 
 import { Album, ValidatedAlbum } from './types/album.types';
-import { FavsService } from 'src/favs/favs.service';
 import { TrackModule } from 'src/track/track.module';
 import { TrackService } from 'src/track/track.service';
 import { CreateTrack } from 'src/track/types/track.types';
@@ -16,8 +15,6 @@ import { CreateTrack } from 'src/track/types/track.types';
 @Injectable()
 export class AlbumService {
   constructor(
-    @Inject(forwardRef(() => FavsService))
-    private readonly favsService: FavsService,
     @Inject(forwardRef(() => TrackService))
     private readonly trackService: TrackService,
   ) {}
@@ -77,7 +74,7 @@ export class AlbumService {
     if (!foundedAlbum) {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
-    this.favsService.deleteItem('albums', id);
+
     this.trackService.deleteId('albumId', id);
     this.albums = this.albums.filter(({ id }) => id !== foundedAlbum.id);
   }

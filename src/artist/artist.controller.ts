@@ -8,25 +8,26 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { Artist } from '@prisma/client';
 import { ArtistService } from './artist.service';
-import { Artist, CreateArtist } from './types/artist.types';
+import { CreateArtist } from './types/artist.types';
 
 @Controller('artist')
 export class ArtistController {
   constructor(private readonly artistService: ArtistService) {}
 
   @Get()
-  getAll(): Artist[] {
+  getAll(): Promise<Artist[]> {
     return this.artistService.getAll();
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string): Artist {
+  getOne(@Param('id') id: string): Promise<Artist> {
     return this.artistService.getOne(id);
   }
 
   @Post()
-  create(@Body() createArtistDto: CreateArtist): Artist {
+  create(@Body() createArtistDto: CreateArtist): Promise<Artist> {
     return this.artistService.create(createArtistDto);
   }
 
@@ -34,7 +35,7 @@ export class ArtistController {
   update(
     @Body() updateArtistDto: CreateArtist,
     @Param('id') id: string,
-  ): Artist {
+  ): Promise<Artist> {
     return this.artistService.update(updateArtistDto, id);
   }
 

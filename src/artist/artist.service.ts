@@ -1,36 +1,22 @@
-import {
-  forwardRef,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
-import { Artist, CreateArtist } from './types/artist.types';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Artist } from '@prisma/client';
 import { v4, validate } from 'uuid';
-import { FavsService } from 'src/favs/favs.service';
-import { TrackService } from 'src/track/track.service';
-import { CreateTrack } from 'src/track/types/track.types';
-import { AlbumService } from 'src/album/album.service';
-import { ValidatedAlbum } from 'src/album/types/album.types';
+
+import { CreateArtist } from './types/artist.types';
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class ArtistService {
-  constructor(
-    @Inject(forwardRef(() => FavsService))
-    private readonly favsService: FavsService,
-    @Inject(forwardRef(() => TrackService))
-    private readonly trackService: TrackService,
-    @Inject(forwardRef(() => AlbumService))
-    private readonly albumService: AlbumService,
-  ) {}
-  private artists: Artist[] = [];
+  constructor(private readonly dbService: DbService) {}
 
-  getAll() {
-    return this.artists;
+  async getAll() {
+    return await this.dbService.artist.findMany();
   }
 
-  getOne(id: string) {
-    const foundedArtist = this.findArtist(id);
+  async getOne(id: string) {
+    const foundedArtist = await this.dbService.artist.findUnique({
+      where: { id },
+    });
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
     }
@@ -40,36 +26,36 @@ export class ArtistService {
     return foundedArtist;
   }
 
-  create(createArtistDto: CreateArtist) {
+  async create(createArtistDto: CreateArtist) {
     const newArtist = {
       ...createArtistDto,
       id: v4(),
     };
-    this.artists.push(newArtist);
-    return newArtist;
+    const artist = await this.dbService.artist.create({ data: newArtist });
+    return artist;
   }
 
-  update(createArtistDto: CreateArtist, id: string) {
-    const foundedArtist = this.findArtist(id);
+  async update(createArtistDto: CreateArtist, id: string) {
+    const foundedArtist = await this.dbService.artist.findUnique({
+      where: { id },
+    });
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
     }
     if (!foundedArtist) {
       throw new HttpException('Artist is not found', HttpStatus.NOT_FOUND);
     }
-    const updatedArtist = {
-      ...foundedArtist,
-      ...createArtistDto,
-    };
-    this.artists = [
-      ...this.artists.filter(({ id }) => id !== foundedArtist.id),
-      updatedArtist,
-    ];
+    const updatedArtist = await this.dbService.artist.update({
+      where: { id },
+      data: { ...createArtistDto },
+    });
     return updatedArtist;
   }
 
-  delete(id: string) {
-    const foundedArtist = this.findArtist(id);
+  async delete(id: string) {
+    const foundedArtist = await this.dbService.artist.findUnique({
+      where: { id },
+    });
 
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -77,14 +63,9 @@ export class ArtistService {
     if (!foundedArtist) {
       throw new HttpException('Artist is not found', HttpStatus.NOT_FOUND);
     }
-    this.favsService.deleteItem('artists', id);
-
-    this.trackService.deleteId('artistId', id);
-    this.albumService.deleteId('artistId', id);
-    this.artists = this.artists.filter(({ id }) => id !== foundedArtist.id);
-  }
-
-  findArtist(artistId: string) {
-    return this.artists.find(({ id }) => id === artistId);
+    // Think about this part
+    await this.dbService.artist.delete({
+      where: { id },
+    });
   }
 }
