@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    ports:
+      - 8000:5432
+    environment:
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_USER: zhenya
+      POSTGRES_DB: database
+  backend:
+    depends_on:
+      - db
+    build: ./
+    ports:
+      - 3000:3000
