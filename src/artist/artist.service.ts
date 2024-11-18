@@ -1,13 +1,16 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Artist } from '@prisma/client';
 import { v4, validate } from 'uuid';
 
 import { CreateArtist } from './types/artist.types';
 import { DbService } from 'src/db/db.service';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class ArtistService {
-  constructor(private readonly dbService: DbService) {}
+  constructor(
+    private readonly dbService: DbService,
+    private readonly favsService: FavsService,
+  ) {}
 
   async getAll() {
     return await this.dbService.artist.findMany();
@@ -63,7 +66,13 @@ export class ArtistService {
     if (!foundedArtist) {
       throw new HttpException('Artist is not found', HttpStatus.NOT_FOUND);
     }
-    // Think about this part
+    const foundedFavoritesArtist = await this.dbService.favorites.findUnique({
+      where: { id: '1', artists: { has: id } },
+    });
+    if (foundedFavoritesArtist) {
+      await this.favsService.removeItem('artists', id);
+    }
+
     await this.dbService.artist.delete({
       where: { id },
     });

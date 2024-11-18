@@ -3,10 +3,14 @@ import { v4, validate } from 'uuid';
 
 import { ValidatedAlbum } from './types/album.types';
 import { DbService } from 'src/db/db.service';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class AlbumService {
-  constructor(private readonly dbService: DbService) {}
+  constructor(
+    private readonly dbService: DbService,
+    private readonly favsService: FavsService,
+  ) {}
 
   async getAll() {
     return await this.dbService.album.findMany();
@@ -66,7 +70,12 @@ export class AlbumService {
       throw new HttpException('Album is not found', HttpStatus.NOT_FOUND);
     }
 
-    // Think about this
+    const foundedFavoritesAlbum = await this.dbService.favorites.findUnique({
+      where: { id: '1', albums: { has: id } },
+    });
+    if (foundedFavoritesAlbum) {
+      await this.favsService.removeItem('albums', id);
+    }
     await this.dbService.album.delete({
       where: { id },
     });
