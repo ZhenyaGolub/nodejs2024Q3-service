@@ -1,17 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateTrack, Track } from './types/track.types';
+import { CreateTrack } from './types/track.types';
 import { v4, validate } from 'uuid';
+import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class TrackService {
-  private tracks: Track[] = [];
+  constructor(private readonly dbService: DbService) {}
 
-  getAll() {
-    return this.tracks;
+  async getAll() {
+    return this.dbService.track.findMany();
   }
 
-  getOne(id: string) {
-    const foundedTrack = this.findTrack(id);
+  async getOne(id: string) {
+    const foundedTrack = await this.dbService.track.findUnique({
+      where: { id },
+    });
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
     }
@@ -21,19 +24,23 @@ export class TrackService {
     return foundedTrack;
   }
 
-  create({ artistId, albumId, ...props }: CreateTrack) {
-    const newTrack = {
-      ...props,
-      artistId: artistId || null,
-      albumId: albumId || null,
-      id: v4(),
-    };
-    this.tracks.push(newTrack);
+  async create({ artistId, albumId, ...props }: CreateTrack) {
+    const newTrack = await this.dbService.track.create({
+      data: {
+        ...props,
+        artistId: artistId || null,
+        albumId: albumId || null,
+        id: v4(),
+      },
+    });
+
     return newTrack;
   }
 
-  update(updateTrackDto: CreateTrack, id: string) {
-    const foundedTrack = this.findTrack(id);
+  async update(updateTrackDto: CreateTrack, id: string) {
+    const foundedTrack = await this.dbService.track.findUnique({
+      where: { id },
+    });
 
     if (!validate(id)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -42,19 +49,18 @@ export class TrackService {
       throw new HttpException('Track is not found', HttpStatus.NOT_FOUND);
     }
 
-    const updatedTrack = {
-      ...foundedTrack,
-      ...updateTrackDto,
-    };
-    this.tracks = [
-      ...this.tracks.filter(({ id }) => id !== foundedTrack.id),
-      updatedTrack,
-    ];
+    const updatedTrack = await this.dbService.track.update({
+      where: { id },
+      data: updateTrackDto,
+    });
+
     return updatedTrack;
   }
 
-  delete(trackId: string) {
-    const foundedTrack = this.findTrack(trackId);
+  async delete(trackId: string) {
+    const foundedTrack = await this.dbService.track.findUnique({
+      where: { id: trackId },
+    });
 
     if (!validate(trackId)) {
       throw new HttpException('id is not valid', HttpStatus.BAD_REQUEST);
@@ -62,17 +68,8 @@ export class TrackService {
     if (!foundedTrack) {
       throw new HttpException('Track is not found', HttpStatus.NOT_FOUND);
     }
-    this.tracks = this.tracks.filter(({ id }) => id !== trackId);
-  }
-
-  findTrack(trackId: string) {
-    return this.tracks.find(({ id }) => id === trackId);
-  }
-
-  deleteId(key: 'artistId' | 'albumId', id: string) {
-    const track = this.tracks.find((track) => track[key] === id);
-    if (track) {
-      this.update({ [key]: null } as CreateTrack, track.id);
-    }
+    await this.dbService.track.delete({
+      where: { id: trackId },
+    });
   }
 }
