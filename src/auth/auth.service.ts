@@ -14,7 +14,7 @@ export class AuthService {
   ) {}
 
   async signup({ login, password }: CreateUser) {
-    const hashedPassword = await hash(password, process.env.CRYPT_SALT);
+    const hashedPassword = await hash(password, Number(process.env.CRYPT_SALT));
     await this.dbService.user.create({
       data: {
         login,
