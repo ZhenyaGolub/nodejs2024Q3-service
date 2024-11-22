@@ -1,16 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { hash } from 'bcrypt';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { hash, compare } from 'bcrypt';
 import { v4 } from 'uuid';
+import { JwtService } from '@nestjs/jwt';
 
 import { DbService } from 'src/db/db.service';
 import { CreateUser } from 'src/user/types/user.types';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly dbService: DbService) {}
+  constructor(
+    private readonly dbService: DbService,
+    private jwtService: JwtService,
+  ) {}
 
   async signup({ login, password }: CreateUser) {
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await hash(password, process.env.CRYPT_SALT);
     await this.dbService.user.create({
       data: {
         login,
@@ -23,8 +27,25 @@ export class AuthService {
     return { message: 'User have been successfully created' };
   }
 
-  login() {
-    return 2;
+  async login({ login, password }: CreateUser) {
+    const foundedUser = await this.dbService.user.findUnique({
+      where: { login },
+    });
+
+    if (!foundedUser) {
+      throw new HttpException('Authentication error', HttpStatus.FORBIDDEN);
+    }
+
+    if (foundedUser && !(await compare(password, foundedUser.password))) {
+      throw new HttpException('Authentication error', HttpStatus.FORBIDDEN);
+    }
+
+    return {
+      access_token: await this.jwtService.signAsync({
+        sub: foundedUser.id,
+        login: foundedUser.login,
+      }),
+    };
   }
 
   refresh() {
