@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { hash, compare } from 'bcrypt';
 import { v4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
@@ -8,6 +8,7 @@ import { CreateUser } from 'src/user/types/user.types';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name, { timestamp: true });
   constructor(
     private readonly dbService: DbService,
     private jwtService: JwtService,
