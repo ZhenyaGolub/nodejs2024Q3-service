@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class User {
   id: string;
@@ -11,9 +11,11 @@ export class User {
 
 export class CreateUser {
   @IsNotEmpty()
+  @IsString()
   login: string;
 
   @IsNotEmpty()
+  @IsString()
   password: string;
 }
 
